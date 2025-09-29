@@ -3,8 +3,11 @@
 import React, { useState } from 'react';
 
 const videoIds = [
-    "dQw4w9WgXcQ", "A8n4kQ3QkP8", "yCjL-0D5-9U", "d2Wq-z6T1rQ", "v_v2F7-Jd7s",
-    "TzB4f3rM-q0", "yCjL-0D5-9U", "d2Wq-z6T1rQ", "v_v2F7-Jd7s", "TzB4f3rM-q0"
+    "h548t63p_N4", // Narkel Naru Recipe
+    "fmaocE_m44I", // Bengali Sweets Food Vlog
+    "_j4qS0i7a-c", // Easy Bengali Sweet Recipe
+    "oEnC3h5G_gA", // Kolkata Sweet Shop Review
+    "6-yTU22_p1M"  // 10 Famous Bengali Sweets
 ];
 
 const VideoItem: React.FC<{ videoId: string }> = ({ videoId }) => {

@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Product, CartItem } from './types';
 import { PRODUCTS } from './constants';
 import Header from './components/Header';
 import PhotoGallery from './components/PhotoGallery';
 import ProductShowcase from './components/ProductShowcase';
 import VideoReviews from './components/VideoReviews';
+import SocialMedia from './components/SocialMedia';
 import Footer from './components/Footer';
 import ProductDetailPage from './components/ProductDetailPage';
 import CartModal from './components/modals/CartModal';
@@ -93,7 +95,9 @@ const App = () => {
         return () => window.removeEventListener('scroll', handleScrollAnimation);
     }, [viewingProductId]);
 
-    const viewingProduct = viewingProductId ? PRODUCTS.find(p => p.id === viewingProductId) : null;
+    const viewingProduct = useMemo(() => (
+        viewingProductId ? PRODUCTS.find(p => p.id === viewingProductId) : null
+    ), [viewingProductId]);
 
     return (
         <>
@@ -111,6 +115,7 @@ const App = () => {
                     <main className="py-8 md:py-12">
                         <ProductShowcase products={PRODUCTS} onProductClick={handleProductClick} />
                         <VideoReviews />
+                        <SocialMedia />
                     </main>
                 </>
             )}
