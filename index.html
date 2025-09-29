@@ -3,411 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bengali Bites - Khati Naru</title>
+    <title>Bengali Bites - Authentic Recipes</title>
+    <link rel="icon" type="image/png" href="https://i.imgur.com/6Xw2H2C.png">
     <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts for typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for star icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for star and other icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Product data for dynamic rendering
-            const productOptions = [
-                { id: '50gm', weight: '50 gm', price: 59.00, naruCount: '2–3' }, // New option
-                { id: '100gm', weight: '100 gm', price: 99.00, naruCount: '4–5' }, // New option
-                { id: '250gm', weight: '250 gm', price: 199.00, naruCount: '10–12' },
-                { id: '500gm', weight: '500 gm', price: 379.00, naruCount: '20–25' },
-                { id: '1kg', weight: '1 kg', price: 749.00, naruCount: '45–50' }
-            ];
-
-            // DOM elements
-            const optionsContainer = document.getElementById('options-container');
-            const productPriceSpan = document.getElementById('product-price');
-            const naruCountSpan = document.getElementById('naru-count');
-            const quantitySpan = document.getElementById('quantity');
-            const decreaseQtyBtn = document.getElementById('decrease-qty');
-            const increaseQtyBtn = document.getElementById('increase-qty');
-            const addToCartBtn = document.getElementById('add-to-cart-btn');
-            const buyNowWhatsappBtn = document.getElementById('buy-now-whatsapp-btn');
-            const viewCartWhatsappBtn = document.getElementById('view-cart-whatsapp-btn');
-            const feedbackMessage = document.getElementById('feedback-message');
-            const cartItemCountSpan = document.getElementById('cart-item-count');
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabPanes = document.querySelectorAll('.tab-pane'); 
-            const reviewForm = document.getElementById('review-form');
-            const reviewModal = document.getElementById('review-modal');
-            const closeReviewModalBtn = document.getElementById('close-review-modal');
-            const shareReviewBtn = document.getElementById('share-review-btn');
-            const submitReviewBtn = document.getElementById('submit-review-btn');
-            const reviewList = document.getElementById('review-list');
-            const ratingStars = document.querySelectorAll('.rating-star');
-            const reviewCommentInput = document.getElementById('review-comment');
-            const reviewNameInput = document.getElementById('review-name');
-            const animatedElements = document.querySelectorAll('.animate-on-scroll');
-
-            // Main content sections for dynamic display
-            const homeSection = document.getElementById('home-section');
-            const storeComingSoonSection = document.getElementById('store-coming-soon');
-            const uspSection = document.getElementById('usp-section'); 
-            const reviewsSection = document.getElementById('reviews-section'); 
-            const tabsSection = document.getElementById('tabs-section'); 
-
-            const navHomeLink = document.querySelector('a[href="#home-section"]');
-            const navNewStoreLink = document.querySelector('a[href="#store-coming-soon"]');
-
-
-            // Initial state
-            let currentQuantity = 1;
-            let selectedOption = productOptions[0]; // Default to 50gm
-            let cart = []; // In-memory cart
-            let userReviews = [ // Sample reviews
-                { name: 'Anjali S.', comment: 'The Khati Naru from Bengali Bites is simply divine! It tastes exactly like the ones I had as a child.', rating: 5, date: '2024-07-20' },
-                { name: 'Rajeev P.', comment: 'Fresh, delicious, and not overly sweet. My family loved them. Highly recommended!', rating: 4, date: '2024-07-18' },
-                { name: 'Priya D.', comment: 'A taste of home! These narus are authentic and so comforting. Will definitely order again.', rating: 5, date: '2024-07-15' },
-                { name: 'Sourav M.', comment: 'Good quality, but a bit too sweet for my preference. Still, a nice treat.', rating: 3, date: '2024-07-10' }
-            ];
-            let currentRating = 0; // For review form
-
-            // Function to render product options
-            function renderOptions() {
-                optionsContainer.innerHTML = ''; // Clear existing options
-                productOptions.forEach(option => {
-                    const button = document.createElement('button');
-                    button.textContent = option.weight;
-                    button.dataset.id = option.id;
-                    button.classList.add('option-btn', 'px-6', 'py-3', 'rounded-md', 'font-semibold', 'border-2', 'border-stone-300', 'text-stone-700', 'transition-all', 'duration-200', 'ease-in-out');
-                    if (option.id === selectedOption.id) {
-                        button.classList.add('option-active');
-                    }
-                    optionsContainer.appendChild(button);
-                });
-            }
-
-            // Function to update the UI based on selected option and quantity
-            function updateProductUI() {
-                productPriceSpan.textContent = (selectedOption.price * currentQuantity).toFixed(2);
-                naruCountSpan.textContent = selectedOption.naruCount;
-                quantitySpan.textContent = currentQuantity;
-            }
-
-            // Function to update cart item count in header badge
-            function updateCartItemCount() {
-                const totalItemsInCart = cart.reduce((total, item) => total + item.quantity, 0);
-                cartItemCountSpan.textContent = totalItemsInCart;
-                cartItemCountSpan.classList.toggle('hidden', totalItemsInCart === 0);
-            }
-
-            // Function to render reviews
-            function renderReviews() {
-                reviewList.innerHTML = ''; // Clear existing reviews
-                userReviews.forEach(review => {
-                    const reviewElement = document.createElement('div');
-                    reviewElement.classList.add('bg-amber-50', 'p-6', 'rounded-lg', 'border-l-4', 'border-amber-500', 'flex', 'flex-col', 'gap-2');
-                    
-                    const starsHtml = Array(5).fill(null).map((_, i) => `
-                        <i class="fa-solid fa-star ${i < review.rating ? 'text-amber-500' : 'text-stone-300'}"></i>
-                    `).join('');
-
-                    reviewElement.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <p class="font-semibold text-amber-800">${review.name}</p>
-                            <div class="flex text-sm">${starsHtml}</div>
-                        </div>
-                        <p class="italic text-stone-700">"${review.comment}"</p>
-                        <p class="text-xs text-stone-500 text-right">${review.date}</p>
-                    `;
-                    reviewList.appendChild(reviewElement);
-                });
-            }
-
-
-            // Event listener for product options
-            optionsContainer.addEventListener('click', (event) => {
-                const target = event.target;
-                if (target.classList.contains('option-btn')) {
-                    document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('option-active'));
-                    target.classList.add('option-active');
-                    const selectedId = target.dataset.id;
-                    selectedOption = productOptions.find(opt => opt.id === selectedId);
-                    currentQuantity = 1; // Reset quantity when changing option
-                    updateProductUI();
-                }
-            });
-
-            // Event listeners for quantity buttons
-            decreaseQtyBtn.addEventListener('click', () => {
-                if (currentQuantity > 1) {
-                    currentQuantity--;
-                    updateProductUI();
-                }
-            });
-
-            increaseQtyBtn.addEventListener('click', () => {
-                // Limit quantity to 5 per item
-                if (currentQuantity < 5) {
-                    currentQuantity++;
-                    updateProductUI();
-                } else {
-                    feedbackMessage.textContent = 'Maximum 5 packs per item.';
-                    setTimeout(() => feedbackMessage.textContent = '', 3000);
-                }
-            });
-
-            // Event listener for "Add to Cart" button
-            addToCartBtn.addEventListener('click', () => {
-                const existingItemIndex = cart.findIndex(item => item.id === selectedOption.id);
-
-                if (existingItemIndex > -1) {
-                    // Item already in cart, update quantity
-                    cart[existingItemIndex].quantity += currentQuantity;
-                } else {
-                    // Add new item to cart
-                    cart.push({ ...selectedOption, quantity: currentQuantity });
-                }
-                
-                feedbackMessage.textContent = `${currentQuantity} pack(s) of ${selectedOption.weight} Naru added to cart!`;
-                setTimeout(() => {
-                    feedbackMessage.textContent = '';
-                }, 3000);
-
-                // Reset quantity and update UI for next selection
-                currentQuantity = 1;
-                updateProductUI();
-                updateCartItemCount();
-            });
-
-            // Event listener for new "Buy Now via WhatsApp" button
-            buyNowWhatsappBtn.addEventListener('click', () => {
-                const phoneNumber = '919339483660';
-                const message = encodeURIComponent(`Hello, I would like to order ${currentQuantity} pack(s) of ${selectedOption.weight} Khati Naru. The total price is ₹${(selectedOption.price * currentQuantity).toFixed(2)}.`);
-                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
-                
-                window.open(whatsappUrl, '_blank');
-                feedbackMessage.textContent = 'Opening WhatsApp to complete your order for this item...';
-                setTimeout(() => {
-                    feedbackMessage.textContent = '';
-                }, 5000);
-            });
-
-
-            // Event listener for "View Cart / Order via WhatsApp" button
-            viewCartWhatsappBtn.addEventListener('click', () => {
-                if (cart.length === 0) {
-                    feedbackMessage.textContent = 'Your cart is empty. Please add items before ordering.';
-                    setTimeout(() => feedbackMessage.textContent = '', 3000);
-                    return;
-                }
-
-                const phoneNumber = '919339483660';
-                let messageParts = ['Hello, I would like to order:'];
-                let totalOrderPrice = 0;
-
-                cart.forEach(item => {
-                    messageParts.push(`- ${item.quantity} pack(s) of ${item.weight} Khati Naru (₹${(item.price * item.quantity).toFixed(2)})`);
-                    totalOrderPrice += item.price * item.quantity;
-                });
-                messageParts.push(`Total order price: ₹${totalOrderPrice.toFixed(2)}.`);
-                messageParts.push('Please confirm availability and delivery details.');
-
-                const message = encodeURIComponent(messageParts.join('\n'));
-                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
-                
-                window.open(whatsappUrl, '_blank');
-                feedbackMessage.textContent = 'Opening WhatsApp to complete your order...';
-                // Optionally clear cart after opening WhatsApp, or add a confirmation
-                cart = [];
-                updateCartItemCount();
-                setTimeout(() => {
-                    feedbackMessage.textContent = '';
-                }, 5000);
-            });
-
-            // Event listeners for tabs
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    tabButtons.forEach(btn => {
-                        btn.classList.remove('tab-active');
-                        btn.classList.remove('text-amber-800');
-                        btn.classList.add('border-transparent', 'text-stone-500');
-                    });
-                    
-                    tabPanes.forEach(pane => pane.classList.add('hidden'));
-
-                    button.classList.add('tab-active');
-                    button.classList.remove('text-stone-500');
-                    
-                    const targetTabId = button.dataset.tab;
-                    const targetPane = document.getElementById(`${targetTabId}-content`);
-                    if (targetPane) {
-                        targetPane.classList.remove('hidden');
-                    }
-                });
-            });
-
-            // Review Modal functionality
-            shareReviewBtn.addEventListener('click', () => {
-                reviewModal.classList.remove('hidden');
-                // Reset form on open
-                reviewForm.reset();
-                ratingStars.forEach(star => star.classList.replace('text-amber-500', 'text-stone-300'));
-                currentRating = 0;
-            });
-
-            closeReviewModalBtn.addEventListener('click', () => {
-                reviewModal.classList.add('hidden');
-            });
-
-            window.addEventListener('click', (event) => {
-                if (event.target === reviewModal) {
-                    reviewModal.classList.add('hidden');
-                }
-            });
-
-            // Rating star interaction
-            ratingStars.forEach(star => {
-                star.addEventListener('click', () => {
-                    const value = parseInt(star.dataset.value);
-                    currentRating = value;
-                    ratingStars.forEach((s, i) => {
-                        if (i < value) {
-                            s.classList.replace('text-stone-300', 'text-amber-500');
-                        } else {
-                            s.classList.replace('text-amber-500', 'text-stone-300');
-                        }
-                    });
-                });
-                star.addEventListener('mouseover', () => {
-                    const value = parseInt(star.dataset.value);
-                    ratingStars.forEach((s, i) => {
-                        if (i < value) {
-                            s.classList.replace('text-stone-300', 'text-amber-400'); // Lighter hover color
-                        } else if (i >= currentRating) { // Only reset if not already rated
-                            s.classList.replace('text-amber-500', 'text-stone-300');
-                        }
-                    });
-                });
-                 star.addEventListener('mouseout', () => {
-                    ratingStars.forEach((s, i) => {
-                        if (i < currentRating) {
-                            s.classList.replace('text-stone-300', 'text-amber-500');
-                            s.classList.replace('text-amber-400', 'text-amber-500');
-                        } else {
-                             s.classList.replace('text-amber-500', 'text-stone-300');
-                             s.classList.replace('text-amber-400', 'text-stone-300');
-                        }
-                    });
-                });
-            });
-
-
-            // Submit review functionality
-            submitReviewBtn.addEventListener('click', (event) => {
-                event.preventDefault(); // Prevent default form submission
-
-                const name = reviewNameInput.value.trim();
-                const comment = reviewCommentInput.value.trim();
-                const rating = currentRating;
-
-                if (!name || !comment || rating === 0) {
-                    feedbackMessage.textContent = 'Please fill in all review fields and select a rating.';
-                    feedbackMessage.classList.remove('text-green-600');
-                    feedbackMessage.classList.add('text-red-600');
-                    setTimeout(() => {
-                        feedbackMessage.textContent = '';
-                        feedbackMessage.classList.remove('text-red-600');
-                    }, 3000);
-                    return;
-                }
-
-                const newReview = {
-                    name: name,
-                    comment: comment,
-                    rating: rating,
-                    date: new Date().toISOString().slice(0, 10) // YYYY-MM-DD format
-                };
-
-                userReviews.unshift(newReview); // Add new review to the beginning
-                renderReviews();
-                reviewModal.classList.add('hidden');
-                feedbackMessage.textContent = 'Thank you for your review!';
-                feedbackMessage.classList.remove('text-red-600');
-                feedbackMessage.classList.add('text-green-600');
-                setTimeout(() => {
-                    feedbackMessage.textContent = '';
-                    feedbackMessage.classList.remove('text-green-600');
-                }, 3000);
-            });
-
-            // Intersection Observer for scroll animations
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('animate-slide-up');
-                    } else {
-                        // Optional: remove animation class if element leaves viewport
-                        // entry.target.classList.remove('animate-slide-up');
-                    }
-                });
-            }, { threshold: 0.2 }); // Trigger when 20% of the element is visible
-
-            animatedElements.forEach(element => {
-                observer.observe(element);
-            });
-
-            // --- Dynamic Section Switching Logic ---
-            function showSection(sectionToShow) {
-                homeSection.style.display = 'none';
-                storeComingSoonSection.style.display = 'none';
-                uspSection.style.display = 'none'; 
-                reviewsSection.style.display = 'none'; 
-                tabsSection.style.display = 'none'; 
-
-
-                if (sectionToShow === homeSection) {
-                    homeSection.style.display = 'block';
-                    uspSection.style.display = 'block'; 
-                    reviewsSection.style.display = 'block'; 
-                    tabsSection.style.display = 'block'; 
-                } else if (sectionToShow === storeComingSoonSection) {
-                    storeComingSoonSection.style.display = 'block';
-                }
-                // Scroll to the top of the displayed section
-                sectionToShow.scrollIntoView({ behavior: 'smooth' });
-            }
-
-            // Event listeners for navigation links
-            navHomeLink.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent default anchor jump
-                showSection(homeSection);
-            });
-
-            navNewStoreLink.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent default anchor jump
-                showSection(storeComingSoonSection);
-            });
-
-            // Initial display on page load
-            // Show home section by default and hide others
-            showSection(homeSection);
-
-            // Initial render of product options and UI
-            renderOptions();
-            updateProductUI();
-            updateCartItemCount(); // Initialize cart count
-            renderReviews(); // Render existing reviews
-        });
-    </script>
-
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #FFFAF0; /* Floral White - a warm, inviting off-white */
+            background-color: #f7f3e8; /* Lighter, more subtle beige */
+            color: #4B3A2C; /* A rich brown color for text */
         }
-        .font-bangla {
-            font-family: 'Tiro Bangla', serif;
-        }
+
+        /* Animation for header text */
         .animate-text {
             animation: slideIn 1.5s ease-out forwards;
         }
@@ -415,33 +29,7 @@
             from { transform: translateX(-100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .tab-active {
-            border-color: #D97706; color: #9A3412; background-color: #FFEDD5;
-        }
-        .option-active {
-            border-color: #D97706; box-shadow: 0 0 0 2px #FBBF24; transform: translateY(-2px);
-        }
-        .btn-primary {
-            background-color: #EA580C; color: white; transition: background-color 0.3s, transform 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: #C2410C; transform: scale(1.05);
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Custom styling for review stars */
-        .rating-star {
-            cursor: pointer;
-            transition: color 0.2s ease-in-out;
-        }
-        .rating-star:hover {
-            color: #FBBF24; /* Amber 400 on hover */
-        }
+
         /* Animation for scroll */
         .animate-on-scroll {
             opacity: 0;
@@ -452,265 +40,80 @@
             opacity: 1;
             transform: translateY(0);
         }
-        /* Custom aspect ratio for 19:6 */
-        .aspect-w-19 {
-            position: relative;
-            padding-bottom: calc(6 / 19 * 100%); /* 6 / 19 aspect ratio */
+
+        /* Utility to hide scrollbar */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
         }
-        .aspect-w-19 > * {
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        /* Styles for Image Zoom */
+        .img-zoom-container {
+            position: relative;
+            cursor: zoom-in;
+        }
+        .img-zoom-lens {
             position: absolute;
-            height: 100%;
-            width: 100%;
-            top: 0;
-            left: 0;
+            border: 1px solid #d4d4d4;
+            /*set the size of the lens:*/
+            width: 100px;
+            height: 100px;
+            pointer-events: none;
+        }
+        .img-zoom-result {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            /*set the size of the result div:*/
+            width: 400px;
+            height: 400px;
+            background-repeat: no-repeat;
+            z-index: 20;
+            display: none;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            background-color: white;
+        }
+
+        /* Styles for Sidebar Navigation */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* --- Marquee Animations --- */
+        @keyframes marquee-scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* Video Reviews Marquee */
+        .marquee-videos {
+            animation: marquee-scroll 80s linear infinite;
+        }
+        
+        /* Pause animation on hover for all marquees within a .marquee-container */
+        .marquee-container:hover > div {
+            animation-play-state: paused;
         }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
+  }
+}
+</script>
 </head>
-<body class="text-stone-800">
-
-    <!-- Header for all sections -->
-    <header class="sticky top-0 bg-white/80 backdrop-blur-lg z-10 shadow-sm">
-        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-amber-800 font-bangla animate-text">Bengali Bites</h1>
-            <nav class="hidden md:flex space-x-8 text-lg font-semibold">
-                <a href="#home-section" class="text-stone-700 hover:text-amber-800 transition-colors">Home</a>
-                <a href="#store-coming-soon" class="text-stone-700 hover:text-amber-800 transition-colors">New Store</a>
-            </nav>
-            <button id="view-cart-whatsapp-btn" class="relative bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105">
-                <i class="fab fa-whatsapp text-xl"></i> View Cart & Order
-                <span id="cart-item-count" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Main Content Wrapper -->
-    <main class="container mx-auto px-6 py-8 md:py-12">
-        <!-- Home Section: Photo Gallery and Product Showcase -->
-        <section id="home-section" class="mb-16 md:mb-24 mt-8 md:mt-12">
-            <!-- Photo Gallery Section -->
-            <section id="photo-gallery" class="mb-16 md:mb-24">
-                <h3 class="text-center text-3xl font-bold text-amber-900">See Our Creations</h3>
-                <p class="text-center text-stone-600 mt-2">These are just a few of the amazing things we make!</p>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6">
-                    <a href="index.html" class="block w-full h-auto object-cover rounded-lg shadow-md transition-transform duration-300 hover:scale-105 animate-on-scroll">
-                        <img src="naru1.jpg" alt="Delicious Khati Naru coconut sweets"
-                             class="w-full h-auto object-cover rounded-lg">
-                    </a>
-                    <a href="index.html" class="block w-full h-auto object-cover rounded-lg shadow-md transition-transform duration-300 hover:scale-105 animate-on-scroll">
-                        <img src="naru2.jpg" alt="Khati Naru for Durga Puja"
-                             class="w-full h-auto object-cover rounded-lg">
-                    </a>
-                    <a href="index.html" class="block w-full h-auto object-cover rounded-lg shadow-md transition-transform duration-300 hover:scale-105 animate-on-scroll">
-                        <img src="naru1.jpg" alt="Khati Naru product packaging"
-                             class="w-full h-auto object-cover rounded-lg">
-                    </a>
-                </div>
-            </section>
-
-            <!-- Product Showcase Section -->
-            <section id="order-section" class="grid grid-cols-1 md:grid-cols-1 gap-8 md:gap-12 items-start max-w-2xl mx-auto">
-                <!-- Removed the image div here -->
-                <div class="flex flex-col gap-6 w-full"> <!-- Added w-full to make it take full width -->
-                    <div class="space-y-2 text-center animate-on-scroll">
-                        <h2 class="text-4xl md:text-5xl font-bold text-amber-900 font-bangla">KHATI NARU</h2>
-                        <p class="text-xl text-stone-600">Traditional Coconut Sweet</p>
-                    </div>
-                    
-                    <p class="text-stone-700 leading-relaxed text-center animate-on-scroll">
-                        Made with pure, natural ingredients, KHATI NARU brings you the authentic taste of home. Soft, delicious, and full of sweetness in every bite. Perfect for festivals, celebrations, or everyday joy.
-                    </p>
-
-                    <!-- Interactive Ordering Widget -->
-                    <div class="bg-white p-6 rounded-lg shadow-md border border-stone-200 space-y-6 animate-on-scroll">
-                        <div>
-                            <label class="block text-lg font-semibold mb-3 text-stone-800">Select Pack Size:</label>
-                            <div id="options-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                                <!-- Options will be injected by JS -->
-                            </div>
-                        </div>
-
-                        <div class="text-center bg-amber-50 p-4 rounded-md">
-                            <p class="text-stone-600">Approx. <span id="naru-count" class="font-bold text-amber-800">10–12</span> narus</p>
-                            <p class="text-3xl font-bold text-amber-900 mt-1">₹<span id="product-price">199.00</span></p>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row items-center gap-4 justify-center">
-                            <div class="flex items-center border border-stone-300 rounded-md">
-                                <button id="decrease-qty" class="px-3 py-2 text-lg font-bold text-stone-600 hover:bg-stone-100 rounded-l-md">-</button>
-                                <span id="quantity" class="px-4 py-2 text-lg font-semibold">1</span>
-                                <button id="increase-qty" class="px-3 py-2 text-lg font-bold text-stone-600 hover:bg-stone-100 rounded-r-md">+</button>
-                            </div>
-                            <button id="add-to-cart-btn" class="btn-primary w-full sm:w-1/2 py-3 rounded-md text-lg font-bold shadow-lg">Add to Cart</button>
-                            <button id="buy-now-whatsapp-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-1/2 py-3 rounded-md text-lg font-bold shadow-lg transition-colors duration-200 flex items-center justify-center gap-2">
-                                <i class="fab fa-whatsapp"></i> Buy Now
-                            </button>
-                        </div>
-                        <p id="feedback-message" class="text-center font-semibold h-5 text-green-600"></p>
-                    </div>
-                </div>
-            </section>
-        </section>
-
-        <!-- New Store Section - Coming Soon -->
-        <section id="store-coming-soon" class="mt-16 md:mt-24 py-12 bg-emerald-50 rounded-lg shadow-md border border-emerald-200 text-center animate-on-scroll" style="display: none;">
-            <h3 class="text-4xl font-bold text-emerald-800 mb-4">Our Store is Coming Soon!</h3>
-            <p class="text-xl text-emerald-600 mb-8">Get ready for more authentic Bengali delights.</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-6 max-w-6xl mx-auto">
-                <!-- Option 1: Our Sweets Collection -->
-                <a href="newstore.html" class="block bg-emerald-100 p-6 rounded-lg shadow-lg border border-emerald-300 transition-transform duration-300 hover:scale-105 cursor-pointer animate-on-scroll">
-                    <div class="aspect-w-19 aspect-h-6">
-                        <img src="choy.jpg" alt="Sweets Collection Image"
-                             class="w-full h-full object-cover rounded-md mb-4">
-                    </div>
-                    <h4 class="text-2xl font-semibold text-emerald-800 mb-2 mt-4">Our Sweets Collection</h4>
-                    <p class="text-emerald-700">Explore our wide range of traditional sweets.</p>
-                    <span class="inline-block mt-4 text-sm font-bold text-emerald-600 bg-emerald-200 px-3 py-1 rounded-full">Coming Soon</span>
-                </a>
-                <!-- Option 2: New Products -->
-                <a href="newstore.html" class="block bg-emerald-100 p-6 rounded-lg shadow-lg border border-emerald-300 transition-transform duration-300 hover:scale-105 cursor-pointer animate-on-scroll">
-                    <div class="aspect-w-19 aspect-h-6">
-                        <img src="choy2.jpg" alt="New Products Image"
-                             class="w-full h-full object-cover rounded-md mb-4">
-                    </div>
-                    <h4 class="text-2xl font-semibold text-emerald-800 mb-2 mt-4">New Products</h4>
-                    <p class="text-emerald-700">Discover our latest innovative sweet creations.</p>
-                    <span class="inline-block mt-4 text-sm font-bold text-emerald-600 bg-emerald-200 px-3 py-1 rounded-full">Coming Soon</span>
-                </a>
-                <!-- Option 3: Special Offers -->
-                <a href="newstore.html" class="block bg-emerald-100 p-6 rounded-lg shadow-lg border border-emerald-300 transition-transform duration-300 hover:scale-105 cursor-pointer animate-on-scroll">
-                    <div class="aspect-w-19 aspect-h-6">
-                        <img src="choy3.jpg" alt="Special Offers Image"
-                             class="w-full h-full object-cover rounded-md mb-4">
-                    </div>
-                    <h4 class="text-2xl font-semibold text-emerald-800 mb-2 mt-4">Special Offers</h4>
-                    <p class="text-emerald-700">Check out our latest discounts and exclusive deals.</p>
-                    <span class="inline-block mt-4 text-sm font-bold text-emerald-600 bg-emerald-200 px-3 py-1 rounded-full">Coming Soon</span>
-                </a>
-                <!-- Option 4: Seasonal Delights -->
-                <a href="newstore.html" class="block bg-emerald-100 p-6 rounded-lg shadow-lg border border-emerald-300 transition-transform duration-300 hover:scale-105 cursor-pointer animate-on-scroll">
-                    <div class="aspect-w-19 aspect-h-6">
-                        <img src="choy4.jpg" alt="Seasonal Delights Image"
-                             class="w-full h-full object-cover rounded-md mb-4">
-                    </div>
-                    <h4 class="text-2xl font-semibold text-emerald-800 mb-2 mt-4">Seasonal Delights</h4>
-                    <p class="text-emerald-700">Enjoy special sweets available for a limited time.</p>
-                    <span class="inline-block mt-4 text-sm font-bold text-emerald-600 bg-emerald-200 px-3 py-1 rounded-full">Coming Soon</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Unique Selling Points (USP) Section -->
-        <section id="usp-section" class="mt-16 md:mt-24 py-12 bg-white rounded-lg shadow-md border border-stone-200 animate-on-scroll">
-            <div class="text-center mb-10">
-                <h3 class="text-3xl font-bold text-amber-900">Why Choose Our Khati Naru?</h3>
-                <p class="text-stone-600 mt-2">Experience the difference of pure, homemade goodness.</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center px-6">
-                <div class="flex flex-col items-center animate-on-scroll">
-                    <span class="text-5xl mb-4">🏡</span>
-                    <h4 class="text-xl font-semibold text-stone-800">Authentic Homemade Taste</h4>
-                    <p class="text-stone-600 mt-2">Crafted with traditional recipes, just like grandma used to make!</p>
-                </div>
-                <div class="flex flex-col items-center animate-on-scroll">
-                    <span class="text-5xl mb-4">🌿</span>
-                    <h4 class="text-xl font-semibold text-stone-800">100% Natural Ingredients</h4>
-                    <p class="text-stone-600 mt-2">We use only the finest coconut, jaggery, and milk. Pure and simple.</p>
-                </div>
-                <div class="flex flex-col items-center animate-on-scroll">
-                    <span class="text-5xl mb-4">✨</span>
-                    <h4 class="text-xl font-semibold text-stone-800">No Chemicals or Preservatives</h4>
-                    <p class="text-stone-600 mt-2">Enjoy wholesome, natural sweetness, free from any artificial additives.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Customer Reviews Section -->
-        <section id="reviews-section" class="mt-16 md:mt-24 py-12 bg-white rounded-lg shadow-md border border-stone-200 animate-on-scroll">
-            <div class="text-center mb-10">
-                <h3 class="text-3xl font-bold text-amber-900">What Our Customers Say</h3>
-                <p class="text-stone-600 mt-2">Honest feedback from happy Bengali Bites lovers.</p>
-            </div>
-            <div id="review-list" class="grid grid-cols-1 md:grid-cols-2 gap-8 px-6">
-                <!-- Reviews will be injected by JS -->
-            </div>
-            <div class="text-center mt-8">
-                <button id="share-review-btn" class="inline-block btn-primary py-3 px-6 rounded-md text-lg font-bold shadow-lg">Share Your Review</button>
-            </div>
-        </section>
-
-        <!-- Detailed Information Tabs Section -->
-        <section id="tabs-section" class="mt-16 md:mt-24 animate-on-scroll">
-            <div class="w-full max-w-3xl mx-auto">
-                <div class="border-b border-stone-300 flex justify-center mb-6">
-                    <button data-tab="ingredients" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 tab-active">Ingredients</button>
-                    <button data-tab="storage" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent text-stone-500">Storage</button>
-                    <button data-tab="delivery" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent text-stone-500">Delivery & Payment</button>
-                </div>
-                <div id="tab-content" class="bg-white p-8 rounded-lg shadow-md border border-stone-200 min-h-[150px]">
-                    <div id="ingredients-content" class="tab-pane fade-in">
-                        <p class="text-stone-700 leading-relaxed">Our Khati Naru is made from a simple, pure blend of high-quality ingredients: <strong class="text-amber-800">Fresh Coconut, Pure Jaggery/Sugar, Rich Milk, and a hint of aromatic Cardamom.</strong></p>
-                    </div>
-                    <div id="storage-content" class="tab-pane hidden fade-in">
-                        <p class="text-stone-700 leading-relaxed">Store your Khati Naru in a <strong class="text-amber-800">cool, dry place</strong> away from direct sunlight. For the best taste and texture, it is recommended to consume them within <strong class="text-amber-800">10-14 days</strong> of delivery. Do not refrigerate.</p>
-                    </div>
-                    <div id="delivery-content" class="tab-pane hidden fade-in">
-                        <p class="text-stone-700 leading-relaxed">We offer secure delivery across India. Orders are dispatched within 24-48 hours. We accept all major credit cards, debit cards, UPI, and net banking for your convenience. All deliveries are handled with care to ensure the freshness of your sweets.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Review Submission Modal -->
-    <div id="review-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-lg p-8 shadow-xl max-w_lg w-full relative">
-            <button id="close-review-modal" class="absolute top-4 right-4 text-stone-500 hover:text-stone-800 text-2xl font-bold">&times;</button>
-            <h3 class="text-2xl font-bold text-amber-900 mb-6 text-center">Share Your Experience</h3>
-            <form id="review-form" class="space-y-6">
-                <div>
-                    <label for="review-name" class="block text-sm font-medium text-stone-700 mb-2">Your Name:</label>
-                    <input type="text" id="review-name" name="review-name" required
-                           class="w-full p-3 border border-stone-300 rounded-md focus:ring-amber-500 focus:border-amber-500 transition-all">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-2">Your Rating (1-5 Stars):</label>
-                    <div class="flex items-center justify-center gap-1 text-3xl">
-                        <i class="fa-solid fa-star rating-star text-stone-300" data-value="1"></i>
-                        <i class="fa-solid fa-star rating-star text-stone-300" data-value="2"></i>
-                        <i class="fa-solid fa-star rating-star text-stone-300" data-value="3"></i>
-                        <i class="fa-solid fa-star rating-star text-stone-300" data-value="4"></i>
-                        <i class="fa-solid fa-star rating-star text-stone-300" data-value="5"></i>
-                    </div>
-                </div>
-                <div>
-                    <label for="review-comment" class="block text-sm font-medium text-stone-700 mb-2">Your Comment:</label>
-                    <textarea id="review-comment" name="review-comment" rows="4" required
-                              class="w-full p-3 border border-stone-300 rounded-md focus:ring-amber-500 focus:border-amber-500 transition-all resize-y"></textarea>
-                </div>
-                <button type="submit" id="submit-review-btn" class="btn-primary w-full py-3 rounded-md text-lg font-bold shadow-lg">Submit Review</button>
-            </form>
-            <p id="review-feedback-message" class="text-center text-green-600 font-semibold mt-4 h-5"></p>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-stone-900 text-white text-center py-6 mt-16">
-        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-            <p>&copy; 2025 Bengali Bites. All rights reserved.</p>
-            <div class="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
-                <div class="flex flex-col items-center">
-                    <img src="insta.jpg" alt="Instagram QR Code" class="w-24 h-24 rounded-lg shadow-md mb-2">
-                    <p class="text-sm text-amber-300">Scan for Instagram</p>
-                </div>
-                <div class="flex flex-col items-start text-left md:text-right">
-                    <p class="text-amber-300 mb-1">Call Us: +91 9339483666</p>
-                    <p class="text-amber-300 mb-1">Email: info@bengalibites.com</p>
-                    <p class="text-amber-300 mb-1">Address: Ranaghat, Nadia, West Bengal, India</p>
-                    <a href="#" class="text-amber-300 hover:text-amber-100 transition-colors mt-2">Privacy Policy</a>
-                    <a href="#" class="text-amber-300 hover:text-amber-100 transition-colors">Terms of Service</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>

@@ -1,0 +1,5 @@
+{
+  "name": "Bengali Bites",
+  "description": "An e-commerce web application for a brand named 'Bengali Bites', specializing in authentic Bengali snacks. Users can browse products, view details, add items to a cart, and place orders via WhatsApp. The application also features an AI assistant powered by the Gemini API to answer product questions and generate social media posts.",
+  "requestFramePermissions": []
+}
