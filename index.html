@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bengali Bites - Authentic Recipes</title>
     <link rel="icon" type="image/png" href="https://i.imgur.com/6Xw2H2C.png">
-    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,14 +12,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for star and other icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f3e8; /* Lighter, more subtle beige */
             color: #4B3A2C; /* A rich brown color for text */
         }
-
         /* Animation for header text */
         .animate-text {
             animation: slideIn 1.5s ease-out forwards;
@@ -29,7 +26,6 @@
             from { transform: translateX(-100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-
         /* Animation for scroll */
         .animate-on-scroll {
             opacity: 0;
@@ -40,7 +36,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-
         /* Utility to hide scrollbar */
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
@@ -49,7 +44,6 @@
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
-        
         /* Styles for Image Zoom */
         .img-zoom-container {
             position: relative;
@@ -58,7 +52,6 @@
         .img-zoom-lens {
             position: absolute;
             border: 1px solid #d4d4d4;
-            /*set the size of the lens:*/
             width: 100px;
             height: 100px;
             pointer-events: none;
@@ -66,7 +59,6 @@
         .img-zoom-result {
             position: absolute;
             border: 1px solid #d4d4d4;
-            /*set the size of the result div:*/
             width: 400px;
             height: 400px;
             background-repeat: no-repeat;
@@ -76,7 +68,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             background-color: white;
         }
-
         /* Styles for Sidebar Navigation */
         #sidebar {
             transition: transform 0.3s ease-in-out;
@@ -84,28 +75,943 @@
         .sidebar-overlay {
             transition: opacity 0.3s ease-in-out;
         }
-
         /* --- Marquee Animations --- */
         @keyframes marquee-scroll {
             from { transform: translateX(0); }
             to { transform: translateX(-50%); }
         }
-
         /* Video Reviews Marquee */
         .marquee-videos {
             animation: marquee-scroll 80s linear infinite;
         }
-        
         /* Pause animation on hover for all marquees within a .marquee-container */
         .marquee-container:hover > div {
             animation-play-state: paused;
         }
     </style>
-
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "@google/genai": "https://esm.sh/@google/genai"
+      }
+    }
+    </script>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
-    <script type="module" src="index.tsx"></script>
+    <script type="module">
+        import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { GoogleGenAI } from "@google/genai";
+
+        // --- CONSTANTS (from constants.ts) ---
+        const PRODUCTS = [
+            {
+                id: 'sada-naru',
+                name: 'Narkel Naru (Coconut Laddoo )',
+                images: [
+                    "https://i.imgur.com/6g6sE1j.jpg",
+                    "https://i.imgur.com/k2A4dY7.jpg",
+                    "https://i.imgur.com/d5yY0bM.jpg",
+                    "https://i.imgur.com/bX3v4vX.jpg",
+                ],
+                badge: 'Sweet & Simple',
+                description: `
+                    <p>A timeless Bengali classic, <strong>Sada Naru</strong> are delectable coconut ladoos that melt in your mouth. Made from freshly grated coconut and slow-cooked with fine sugar (Chini), these little spheres of joy offer a clean and purely sweet taste of nostalgia.</p>
+                    <ul>
+                        <li>Made with premium quality coconut and pure sugar</li>
+                        <li>Hand-rolled to perfection for a delicate texture</li>
+                        <li>A perfect sweet snack for any time of the day</li>
+                    </ul>
+                `,
+                approxLadoos: 'Approx. 15-18 pieces per 500g',
+                packSizes: [
+                    { weight: '250g', price: 190, oldPrice: 210 },
+                    { weight: '500g', price: 370, oldPrice: 400 },
+                    { weight: '1kg', price: 720, oldPrice: 780 },
+                ],
+            },
+            {
+                id: 'gurer-naru',
+                name: 'Narkel Naru (Coconut Ladoo With Jaggery)',
+                images: [
+                    "https://i.imgur.com/rMUM5Yp.jpg",
+                    "https://i.imgur.com/UfO2gTj.jpg",
+                    "https://i.imgur.com/uG26b0D.jpg",
+                    "https://i.imgur.com/P0s1nJk.jpg",
+                ],
+                badge: 'Classic Favourite',
+                description: `
+                    <p>170g. A timeless Bengali classic, <strong>Gurer Naru</strong> are delectable coconut ladoos that melt in your mouth. Made from freshly grated coconut and slow-cooked with fragrant jaggery (Gur), these little spheres of joy are a taste of pure nostalgia.</p>
+                    <ul>
+                        <li>Made with premium quality coconut and fragrant jaggery</li>
+                        <li>Hand-rolled to perfection for an authentic taste</li>
+                        <li>A perfect sweet snack for any time of the day</li>
+                    </ul>
+                `,
+                approxLadoos: 'Approx. 15-18 pieces per 500g',
+                packSizes: [
+                    { weight: '250g', price: 190, oldPrice: 210 },
+                    { weight: '500g', price: 370, oldPrice: 400 },
+                    { weight: '1kg', price: 720, oldPrice: 780 },
+                ],
+            },
+            {
+                id: 'sada-naru-combo',
+                name: 'Narkel Naru (Coconut Laddoo) - Combo Pack',
+                images: [
+                    "https://i.imgur.com/6g6sE1j.jpg",
+                    "https://i.imgur.com/k2A4dY7.jpg",
+                    "https://i.imgur.com/d5yY0bM.jpg",
+                    "https://i.imgur.com/bX3v4vX.jpg",
+                ],
+                badge: 'Value Combo',
+                description: `
+                    <p>Can't get enough of our classic <strong>Sada Naru</strong>? This special combo pack is perfect for you! Stock up on your favorite sweet or share the joy with family and friends. It's the same delicious, melt-in-your-mouth coconut laddoo, now in a value-packed offer.</p>
+                    <ul>
+                        <li>Great savings on a larger quantity</li>
+                        <li>Perfect for gifting or family gatherings</li>
+                        <li>Made with the same premium quality coconut and pure sugar</li>
+                    </ul>
+                `,
+                approxLadoos: 'Approx. 30-36 pieces per pack',
+                packSizes: [
+                    { weight: '500g (2x250g)', price: 360, oldPrice: 380 },
+                    { weight: '1kg (2x500g)', price: 700, oldPrice: 740 },
+                ],
+            },
+            {
+                id: 'gurer-naru-combo',
+                name: 'Narkel Naru (Coconut Ladoo With Jaggery) - Combo Pack',
+                images: [
+                    "https://i.imgur.com/rMUM5Yp.jpg",
+                    "https://i.imgur.com/UfO2gTj.jpg",
+                    "https://i.imgur.com/uG26b0D.jpg",
+                    "https://i.imgur.com/P0s1nJk.jpg",
+                ],
+                badge: 'Jaggery Delight',
+                description: `
+                    <p>Enjoy more of the authentic, fragrant taste of <strong>Gurer Naru</strong> with our special combo offer. Made with rich, date palm jaggery, this pack is ideal for those who love the traditional flavor of Bengal. Perfect for festive occasions or as a heartfelt gift.</p>
+                    <ul>
+                        <li>Special value pack for our classic jaggery naru</li>
+                        <li>Ideal for sharing during festivals and celebrations</li>
+                        <li>Made with the same premium quality coconut and fragrant jaggery</li>
+                    </ul>
+                `,
+                approxLadoos: 'Approx. 30-36 pieces per pack',
+                packSizes: [
+                    { weight: '500g (2x250g)', price: 360, oldPrice: 380 },
+                    { weight: '1kg (2x500g)', price: 700, oldPrice: 740 },
+                ],
+            },
+        ];
+
+        // --- SERVICES (from services/geminiService.ts) ---
+        if (!process.env.API_KEY) {
+            console.warn("API_KEY environment variable not set. AI features will not work.");
+        }
+        
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
+        const stripHtml = (html) => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            return doc.body.textContent || "";
+        };
+
+        const askGeminiAboutProduct = async (product, history) => {
+            if (!process.env.API_KEY) {
+                return "I'm sorry, the AI assistant is not configured. Please contact support.";
+            }
+            const model = 'gemini-2.5-flash';
+
+            const productInfo = `Product Name: ${product.name}
+        Description: ${stripHtml(product.description)}
+        Pack Sizes and Prices: ${product.packSizes.map(p => `${p.weight} for ₹${p.price}`).join(', ')}
+        Approximate Ladoos per 500g (if applicable): ${product.approxLadoos}
+        `;
+
+            const systemInstruction = `You are a friendly and helpful customer support assistant for "Bengali Bites", an online store selling authentic Bengali sweets and snacks. Your goal is to answer customer questions about the products accurately and concisely. Use the provided product information to answer. Do not make up information. If you don't know the answer, say you need to check with the team. Keep your answers brief.
+            
+        Here is the product information for the current conversation:
+        ${productInfo}
+        `;
+
+            try {
+                const response = await ai.models.generateContent({
+                    model: model,
+                    contents: history,
+                    config: {
+                        systemInstruction: systemInstruction,
+                    },
+                });
+
+                return response.text;
+            } catch (e) {
+                console.error("Error calling Gemini API:", e);
+                return "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
+            }
+        };
+
+
+        // --- UI COMPONENTS ---
+        
+        // From components/ui/MessageBox.tsx
+        const MessageBox = ({ message }) => {
+            const [isVisible, setIsVisible] = useState(false);
+
+            useEffect(() => {
+                if (message) {
+                    setIsVisible(true);
+                    const timer = setTimeout(() => {
+                        setIsVisible(false);
+                    }, 2700);
+                    return () => clearTimeout(timer);
+                }
+            }, [message]);
+
+            return (
+                React.createElement('div', { 
+                    className: `fixed bottom-0 left-0 right-0 p-4 transition-transform duration-300 z-50 ${isVisible ? 'translate-y-0' : 'translate-y-full'}`
+                },
+                    React.createElement('div', { className: "bg-green-500 text-white text-center font-semibold py-3 px-6 rounded-lg shadow-xl max-w-md mx-auto" },
+                        React.createElement('p', null, message)
+                    )
+                )
+            );
+        };
+
+        // From components/modals/CartModal.tsx
+        const CartModal = ({ isOpen, onClose, cartItems, onRemoveItem, showMessage }) => {
+            if (!isOpen) return null;
+
+            const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+            const handleWhatsAppOrder = () => {
+                if (cartItems.length === 0) {
+                    showMessage('Your cart is empty. Please add items before ordering.');
+                    return;
+                }
+
+                let message = `Hello, I would like to place an order from Bengali Bites. Here is my cart:\n\n`;
+                let total = 0;
+
+                cartItems.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    message += `* ${item.name} (${item.packSize}) - Qty: ${item.quantity} - Price: ₹${itemTotal.toFixed(2)}\n`;
+                    total += itemTotal;
+                });
+                
+                message += `\n*Total: ₹${total.toFixed(2)}*\n\nPlease provide payment and shipping details.`;
+                
+                const encodedMessage = encodeURIComponent(message);
+                const whatsappUrl = `https://wa.me/+917864843669?text=${encodedMessage}`;
+                window.open(whatsappUrl, '_blank');
+            };
+
+            return (
+                React.createElement('div', { className: `fixed inset-0 bg-stone-900 bg-opacity-75 flex items-center justify-center p-4 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}` },
+                    React.createElement('div', { className: `bg-white rounded-lg p-6 sm:p-8 shadow-2xl max-w-lg w-full relative transition-transform duration-300 ${isOpen ? 'scale-100' : 'scale-95'}` },
+                        React.createElement('button', { onClick: onClose, className: "absolute top-4 right-4 text-stone-500 hover:text-stone-800 text-3xl" }, "×"),
+                        React.createElement('h4', { className: "text-2xl font-bold text-amber-800 mb-4" }, "Your Cart"),
+                        React.createElement('div', { className: "space-y-4 max-h-80 overflow-y-auto pr-2" },
+                            cartItems.length === 0 ? (
+                                React.createElement('div', { className: "text-center py-8 text-stone-500" }, "Your cart is empty.")
+                            ) : (
+                                cartItems.map(item => (
+                                    React.createElement('div', { key: item.cartId, className: "flex justify-between items-center py-2 border-b last:border-b-0 border-stone-200" },
+                                        React.createElement('div', null,
+                                            React.createElement('h5', { className: "font-semibold text-stone-800" }, item.name),
+                                            React.createElement('p', { className: "text-sm text-stone-600" }, `${item.packSize} x ${item.quantity}`),
+                                            React.createElement('p', { className: "text-sm font-bold text-amber-800" }, `₹${(item.price * item.quantity).toFixed(2)}`)
+                                        ),
+                                        React.createElement('button', { onClick: () => onRemoveItem(item.cartId), className: "text-red-500 hover:text-red-700 transition-colors text-lg p-2" },
+                                            React.createElement('i', { className: "fas fa-trash" })
+                                        )
+                                    )
+                                ))
+                            )
+                        ),
+                        cartItems.length > 0 && (
+                            React.createElement('div', { className: "mt-6 pt-4 border-t border-stone-200" },
+                                React.createElement('p', { className: "text-lg font-bold text-stone-800 flex justify-between" },
+                                    "Total: ", React.createElement('span', null, `₹${totalPrice.toFixed(2)}`)
+                                ),
+                                React.createElement('button', { onClick: handleWhatsAppOrder, className: "bg-emerald-600 hover:bg-emerald-700 text-white w-full py-3 rounded-md text-lg font-bold shadow-lg transition-colors duration-200 flex items-center justify-center gap-2 mt-4" },
+                                    React.createElement('i', { className: "fab fa-whatsapp text-xl" }), " Order via WhatsApp"
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        // From components/modals/GeminiChatModal.tsx
+        const LoadingIndicator = () => (
+            React.createElement('div', { className: "flex justify-start items-center gap-2 p-2" },
+                React.createElement('div', { className: "w-2 h-2 rounded-full bg-amber-500 animate-bounce" }),
+                React.createElement('div', { className: "w-2 h-2 rounded-full bg-amber-500 animate-bounce", style: { animationDelay: '0.2s' } }),
+                React.createElement('div', { className: "w-2 h-2 rounded-full bg-amber-500 animate-bounce", style: { animationDelay: '0.4s' } })
+            )
+        );
+
+        const GeminiChatModal = ({ isOpen, onClose, product }) => {
+            const [messages, setMessages] = useState([]);
+            const [inputValue, setInputValue] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const chatMessagesRef = useRef(null);
+
+            useEffect(() => {
+                if (isOpen) {
+                    setMessages([{ 
+                        role: 'assistant', 
+                        text: `Hello, I'm your Chatbot. How can I help you with the product "${product.name}"?`
+                    }]);
+                }
+            }, [isOpen, product]);
+            
+            useEffect(() => {
+                if (chatMessagesRef.current) {
+                    chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+                }
+            }, [messages, isLoading]);
+
+            const handleSendMessage = async () => {
+                const userQuery = inputValue.trim();
+                if (!userQuery || isLoading) return;
+
+                const newMessages = [...messages, { role: 'user', text: userQuery }];
+                setMessages(newMessages);
+                setInputValue('');
+                setIsLoading(true);
+
+                const historyForApi = newMessages.map(m => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.text }]
+                }));
+
+                const assistantResponse = await askGeminiAboutProduct(product, historyForApi);
+
+                setMessages(prev => [...prev, { role: 'assistant', text: assistantResponse }]);
+                setIsLoading(false);
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                React.createElement('div', { className: `fixed inset-0 bg-stone-900 bg-opacity-75 flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}` },
+                    React.createElement('div', { className: `bg-white rounded-lg shadow-2xl w-full max-w-2xl relative transition-transform duration-300 flex flex-col h-[90vh] max-h-[600px] ${isOpen ? 'scale-100' : 'scale-95'}` },
+                        React.createElement('div', { className: "bg-amber-500 text-white py-3 px-4 flex justify-between items-center rounded-t-lg flex-shrink-0" },
+                            React.createElement('h3', { className: "text-xl font-bold" }, "✨ Chatbot"),
+                            React.createElement('button', { onClick: onClose, className: "text-white hover:text-stone-200 text-3xl" }, "×")
+                        ),
+                        React.createElement('div', { ref: chatMessagesRef, className: "flex-grow p-4 overflow-y-auto flex flex-col gap-3 bg-[#f7f3e8]" },
+                            messages.map((msg, index) => (
+                                React.createElement('div', { key: index, className: `max-w-[85%] py-2 px-4 rounded-2xl break-words ${msg.role === 'user' ? 'bg-stone-200 self-end rounded-br-none' : 'bg-white self-start rounded-bl-none whitespace-pre-wrap'}` },
+                                    msg.text
+                                )
+                            )),
+                            isLoading && React.createElement('div', { className: "self-start" }, React.createElement(LoadingIndicator, null))
+                        ),
+                        React.createElement('div', { className: "bg-white border-t border-stone-200 flex items-center p-4 rounded-b-lg flex-shrink-0" },
+                            React.createElement('input', { 
+                                type: "text", 
+                                placeholder: "Type your question here...", 
+                                className: "flex-1 px-4 py-2 text-stone-800 bg-stone-100 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-500",
+                                value: inputValue,
+                                onChange: (e) => setInputValue(e.target.value),
+                                onKeyPress: (e) => e.key === 'Enter' && handleSendMessage(),
+                                disabled: isLoading
+                            }),
+                            React.createElement('button', { onClick: handleSendMessage, disabled: isLoading, className: "bg-amber-500 text-white p-2 rounded-full w-10 h-10 flex items-center justify-center ml-2 hover:bg-amber-600 transition-colors duration-200 disabled:opacity-50" },
+                                React.createElement('i', { className: "fas fa-paper-plane" })
+                            )
+                        )
+                    )
+                )
+            );
+        };
+        
+        // From components/ProductCard.tsx
+        const ProductCard = ({ product, onProductClick }) => {
+            const handleCardClick = () => onProductClick(product.id);
+            const defaultPackSize = product.packSizes[0];
+
+            return (
+                React.createElement('div', { onClick: handleCardClick, className: "bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 animate-on-scroll cursor-pointer overflow-hidden flex flex-col" },
+                    React.createElement('div', { className: "relative w-full aspect-square bg-stone-100" },
+                        React.createElement('img', { src: product.images[0], alt: product.name, className: "w-full h-full object-cover" }),
+                        product.badge && React.createElement('span', { className: "absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md" }, product.badge)
+                    ),
+                    React.createElement('div', { className: "p-6 text-center flex-grow flex flex-col justify-between" },
+                        React.createElement('div', null,
+                            React.createElement('h3', { className: "text-2xl font-bold text-stone-800 mb-1" }, product.name),
+                            React.createElement('div', { className: "text-amber-500 mb-2" },
+                                React.createElement('i', { className: "fa-solid fa-star" }),
+                                React.createElement('i', { className: "fa-solid fa-star" }),
+                                React.createElement('i', { className: "fa-solid fa-star" }),
+                                React.createElement('i', { className: "fa-solid fa-star" }),
+                                React.createElement('i', { className: "fa-solid fa-star-half-stroke" }),
+                                React.createElement('span', { className: "text-sm text-gray-500 ml-1" }, "(4.5)")
+                            ),
+                            React.createElement('div', { className: "flex items-center justify-center space-x-2" },
+                                React.createElement('span', { className: "text-2xl font-bold text-amber-900" }, `₹${defaultPackSize.price.toFixed(2)}`),
+                                defaultPackSize.oldPrice && React.createElement('span', { className: "text-sm text-gray-500 line-through" }, `₹${defaultPackSize.oldPrice.toFixed(2)}`)
+                            )
+                        ),
+                        React.createElement('button', { className: "mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all transform hover:scale-105" }, "View Details")
+                    )
+                )
+            );
+        };
+        
+        // From components/Header.tsx
+        const Sidebar = ({ isOpen, onClose }) => (
+            React.createElement(React.Fragment, null,
+                React.createElement('div', {
+                    className: `sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-30 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`,
+                    onClick: onClose
+                }),
+                React.createElement('div', {
+                    id: "sidebar",
+                    className: `fixed top-0 left-0 h-full w-72 bg-[#f7f3e8] shadow-lg z-40 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+                },
+                    React.createElement('div', { className: "p-4 flex justify-start items-center border-b border-stone-300 gap-6" },
+                         React.createElement('button', { onClick: onClose, className: "text-3xl text-stone-600 hover:text-stone-900" },
+                            React.createElement('i', { className: "fa-solid fa-xmark" })
+                        ),
+                        React.createElement('button', { 'aria-label': "Search" },
+                            React.createElement('i', { className: "fa-solid fa-magnifying-glass text-2xl text-stone-700" })
+                        )
+                    ),
+                    React.createElement('nav', { className: "flex flex-col text-xl text-stone-800" },
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "Home"),
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "Orders"),
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "Track your order"),
+                        React.createElement('a', { href: "#products-section", onClick: onClose, className: "p-4 bg-stone-200 font-semibold" }, "Products"),
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "Return Policy"),
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "About us"),
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "Contact us"),
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "Shipping Policy"),
+                        React.createElement('a', { href: "#", onClick: onClose, className: "p-4 hover:bg-stone-200 transition-colors" }, "Terms of Service")
+                    )
+                )
+            )
+        );
+
+        const Header = ({ cartItemCount, onCartClick }) => {
+            const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+            return (
+                React.createElement(React.Fragment, null,
+                    React.createElement('header', { className: "sticky top-0 bg-white shadow-sm z-20" },
+                        React.createElement('div', { className: "container mx-auto px-6 py-3 flex justify-between items-center" },
+                            React.createElement('a', { href: "#", className: "hidden md:flex items-center" },
+                                React.createElement('h1', { className: "text-3xl font-bold text-amber-800" }, "Bengali Bites")
+                            ),
+                            React.createElement('nav', { className: "hidden md:flex space-x-8 text-lg font-semibold" },
+                                React.createElement('a', { href: "#", className: "text-stone-700 hover:text-amber-800 transition-colors" }, "Home"),
+                                React.createElement('a', { href: "#", className: "text-stone-700 hover:text-amber-800 transition-colors" }, "Orders"),
+                                React.createElement('a', { href: "#products-section", className: "text-stone-700 hover:text-amber-800 transition-colors" }, "Products"),
+                                React.createElement('a', { href: "#video-reviews-section", className: "text-stone-700 hover:text-amber-800 transition-colors" }, "Reviews")
+                            ),
+                            React.createElement('div', { className: "flex items-center gap-6 md:hidden" },
+                                React.createElement('button', { onClick: () => setSidebarOpen(true), 'aria-label': "Open menu" },
+                                    React.createElement('i', { className: "fa-solid fa-bars text-2xl text-stone-700" })
+                                ),
+                                React.createElement('button', { 'aria-label': "Search" },
+                                    React.createElement('i', { className: "fa-solid fa-magnifying-glass text-xl text-stone-700" })
+                                )
+                            ),
+                            React.createElement('button', { 
+                                onClick: onCartClick,
+                                className: "relative bg-teal-500 hover:bg-teal-600 text-white font-bold p-2 md:py-2 md:px-4 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center gap-2",
+                                'aria-label': `View cart with ${cartItemCount} items`
+                            },
+                                React.createElement('i', { className: "fa-solid fa-cart-shopping text-xl" }), 
+                                React.createElement('span', { className: "hidden sm:inline" }, "Cart"),
+                                cartItemCount > 0 && React.createElement('span', { className: "absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" }, cartItemCount)
+                            )
+                        )
+                    ),
+                    React.createElement(Sidebar, { isOpen: isSidebarOpen, onClose: () => setSidebarOpen(false) })
+                )
+            );
+        };
+
+        // From components/PhotoGallery.tsx
+        const galleryImages = [
+            "https://i.imgur.com/rMUM5Yp.jpg",
+            PRODUCTS[0].images[0],
+            "https://i.imgur.com/6g6sE1j.jpg", // A different image for variety
+            PRODUCTS[3] ? PRODUCTS[3].images[2] : "https://i.imgur.com/bX3v4vX.jpg",
+            PRODUCTS[1].images[1],
+        ];
+
+        const PhotoGallery = () => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+
+            const goToNext = useCallback(() => {
+                setCurrentIndex(prevIndex => (prevIndex + 1) % galleryImages.length);
+            }, []);
+
+            const goToPrevious = () => {
+                setCurrentIndex(prevIndex => (prevIndex - 1 + galleryImages.length) % galleryImages.length);
+            };
+
+            const goToSlide = (slideIndex) => {
+                setCurrentIndex(slideIndex);
+            };
+
+            useEffect(() => {
+                const timer = setInterval(goToNext, 5000);
+                return () => clearInterval(timer);
+            }, [goToNext]);
+
+            return (
+                React.createElement('section', { id: "photo-gallery-hero" },
+                    React.createElement('div', { className: "relative w-full aspect-[21/9] overflow-hidden group bg-stone-200" },
+                        React.createElement('div', { className: "w-full h-full" },
+                            galleryImages.map((src, index) => (
+                                React.createElement('div', {
+                                    key: index,
+                                    className: `absolute top-0 left-0 w-full h-full transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`
+                                },
+                                    React.createElement('img', { 
+                                        src: src, 
+                                        alt: `Promotional image of Bengali sweets ${index + 1}`, 
+                                        className: "w-full h-full object-cover"
+                                    })
+                                )
+                            ))
+                        ),
+                        React.createElement('button', { onClick: goToPrevious, className: "absolute top-1/2 left-4 -translate-y-1/2 bg-black bg-opacity-30 text-white rounded-full w-10 h-10 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100", 'aria-label': "Previous image" },
+                            React.createElement('i', { className: "fas fa-chevron-left" })
+                        ),
+                        React.createElement('button', { onClick: goToNext, className: "absolute top-1/2 right-4 -translate-y-1/2 bg-black bg-opacity-30 text-white rounded-full w-10 h-10 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100", 'aria-label': "Next image" },
+                            React.createElement('i', { className: "fas fa-chevron-right" })
+                        ),
+                        React.createElement('div', { className: "absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20" },
+                            galleryImages.map((_, index) => (
+                                React.createElement('button', {
+                                    key: index,
+                                    onClick: () => goToSlide(index),
+                                    className: `w-3 h-3 rounded-full transition-colors ${index === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/75'}`,
+                                    'aria-label': `Go to slide ${index + 1}`
+                                })
+                            ))
+                        )
+                    )
+                )
+            );
+        };
+        
+        // From components/ProductShowcase.tsx
+        const ProductShowcase = ({ products, onProductClick }) => {
+            return (
+                React.createElement('section', { id: "products-section", className: "container mx-auto px-6 mt-16 md:mt-24" },
+                    React.createElement('h2', { className: "text-3xl md:text-4xl font-bold text-amber-900 mb-8 text-center animate-on-scroll" }, "Our Signature Sweets"),
+                    React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8" },
+                        products.map(product => React.createElement(ProductCard, { key: product.id, product: product, onProductClick: onProductClick }))
+                    )
+                )
+            );
+        };
+
+        // From components/VideoReviews.tsx
+        const videoIds = ["h548t63p_N4", "fmaocE_m44I", "_j4qS0i7a-c", "oEnC3h5G_gA", "6-yTU22_p1M"];
+
+        const VideoItem = ({ videoId }) => {
+            const [isMuted, setIsMuted] = useState(true);
+
+            const toggleMute = () => setIsMuted(prev => !prev);
+            
+            const handleVideoClick = (e) => {
+                if (e.target.closest('button')) return;
+                toggleMute();
+            };
+
+            const videoSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${videoId}&controls=0&modestbranding=1&showinfo=0&rel=0`;
+
+            return (
+                React.createElement('div', { className: "relative flex-shrink-0 w-[200px] bg-stone-100 rounded-lg overflow-hidden shadow-md cursor-pointer group/video", onClick: handleVideoClick },
+                    React.createElement('div', { className: "w-full", style: { paddingTop: '177.77%' } },
+                        React.createElement('iframe', {
+                            className: "absolute top-0 left-0 w-full h-full pointer-events-none",
+                            src: videoSrc,
+                            title: "YouTube video player",
+                            frameBorder: "0",
+                            allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+                            allowFullScreen: true
+                        })
+                    ),
+                    React.createElement('button', {
+                        onClick: (e) => { e.stopPropagation(); toggleMute(); },
+                        className: "absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center z-10 hover:bg-opacity-75 transition-opacity",
+                        'aria-label': isMuted ? "Unmute video" : "Mute video"
+                    },
+                        React.createElement('i', { className: `fas ${isMuted ? 'fa-volume-xmark' : 'fa-volume-high'}` })
+                    )
+                )
+            );
+        };
+
+        const VideoReviews = () => {
+            return (
+                React.createElement('section', { id: "video-reviews-section", className: "mt-16 md:mt-24" },
+                    React.createElement('h3', { className: "text-3xl font-bold text-amber-900 mb-6 text-center animate-on-scroll" }, "Customer Video Reviews"),
+                    React.createElement('div', { className: "marquee-container relative overflow-hidden" },
+                         React.createElement('div', { className: "marquee-videos flex gap-4 py-4" },
+                            [...videoIds, ...videoIds].map((id, index) => React.createElement(VideoItem, { key: index, videoId: id }))
+                        )
+                    )
+                )
+            );
+        };
+        
+        // From components/SocialMedia.tsx
+        const SocialMedia = () => {
+            return (
+                React.createElement('section', { id: "social-section", className: "mt-16 md:mt-24 max-w-4xl mx-auto text-center" },
+                    React.createElement('h3', { className: "text-3xl font-bold text-amber-900 mb-2 animate-on-scroll" }, "Follow Us"),
+                    React.createElement('p', { className: "text-xl text-stone-700 mb-6 animate-on-scroll" }, "Share with your friends and family!"),
+                    React.createElement('div', { className: "flex justify-center space-x-8" },
+                        React.createElement('div', { className: "flex flex-col items-center" },
+                            React.createElement('a', { href: "https://www.instagram.com/khati_3669?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==", target: "_blank", rel: "noopener noreferrer", className: "block w-16 h-16 mb-2 rounded-full overflow-hidden transition-transform duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-pink-500 focus:ring-opacity-50 flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600" },
+                                React.createElement('i', { className: "fab fa-instagram text-3xl text-white" })
+                            ),
+                            React.createElement('a', { href: "https://www.instagram.com/khati_3669?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==", target: "_blank", rel: "noopener noreferrer", className: "text-pink-600 font-semibold text-lg transition-colors duration-300 hover:text-pink-800" }, "Instagram Profile")
+                        )
+                    )
+                )
+            );
+        };
+        
+        // From components/Footer.tsx
+        const Footer = () => {
+            return (
+                React.createElement('footer', { className: "bg-stone-900 text-stone-300 py-10 mt-16" },
+                    React.createElement('div', { className: "container mx-auto px-6 text-center md:text-left grid grid-cols-1 md:grid-cols-4 gap-8" },
+                        React.createElement('div', { className: "col-span-1" },
+                            React.createElement('h4', { className: "text-2xl font-bold text-white mb-2" }, "Bengali Bites"),
+                            React.createElement('p', { className: "text-sm text-stone-400 mb-4" }, "Authentic recipes delivered to your doorstep. Experience the true taste of tradition."),
+                            React.createElement('div', { className: "flex justify-center md:justify-start space-x-4" },
+                                React.createElement('a', { href: "https://www.instagram.com/khati_3669?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==", target: "_blank", rel: "noopener noreferrer", className: "text-stone-400 hover:text-white transition-colors" }, React.createElement('i', { className: "fab fa-instagram text-xl" })),
+                                React.createElement('a', { href: "https://www.facebook.com/profile.php?id=61579913873444", target: "_blank", rel: "noopener noreferrer", className: "text-stone-400 hover:text-white transition-colors" }, React.createElement('i', { className: "fab fa-facebook text-xl" })),
+                                React.createElement('a', { href: "#", className: "text-stone-400 hover:text-white transition-colors" }, React.createElement('i', { className: "fab fa-youtube text-xl" })),
+                                React.createElement('a', { href: "https://wa.me/+917864843669", target: "_blank", rel: "noopener noreferrer", className: "text-stone-400 hover:text-white transition-colors" }, React.createElement('i', { className: "fab fa-whatsapp text-xl" }))
+                            )
+                        ),
+                        React.createElement('div', { className: "col-span-1" },
+                            React.createElement('h4', { className: "text-xl font-semibold text-white mb-4" }, "Quick Links"),
+                            React.createElement('ul', { className: "space-y-2" },
+                                React.createElement('li', null, React.createElement('a', { href: "#", className: "text-stone-400 hover:text-white transition-colors" }, "Track Order")),
+                                React.createElement('li', null, React.createElement('a', { href: "#", className: "text-stone-400 hover:text-white transition-colors" }, "Return & Refund Policy")),
+                                React.createElement('li', null, React.createElement('a', { href: "#", className: "text-stone-400 hover:text-white transition-colors" }, "FAQ")),
+                                React.createElement('li', null, React.createElement('a', { href: "#", className: "text-stone-400 hover:text-white transition-colors" }, "Privacy Policy"))
+                            )
+                        ),
+                        React.createElement('div', { className: "col-span-1" },
+                            React.createElement('h4', { className: "text-xl font-semibold text-white mb-4" }, "Company"),
+                            React.createElement('ul', { className: "space-y-2" },
+                                React.createElement('li', null, React.createElement('a', { href: "#", className: "text-stone-400 hover:text-white transition-colors" }, "Our Story")),
+                                React.createElement('li', null, React.createElement('a', { href: "#", className: "text-stone-400 hover:text-white transition-colors" }, "Contact Us"))
+                            )
+                        ),
+                        React.createElement('div', { className: "col-span-1" },
+                            React.createElement('h4', { className: "text-xl font-semibold text-white mb-4" }, "Get in Touch"),
+                            React.createElement('div', { className: "space-y-2" },
+                                React.createElement('p', { className: "flex items-start justify-center md:justify-start" }, React.createElement('i', { className: "fa-solid fa-location-dot text-lg mr-2 mt-1 text-amber-500 flex-shrink-0" }), React.createElement('span', null, "Coopers Camp, 7 no ward, Ranaghat, West Bengal 741232, India.")),
+                                React.createElement('p', { className: "flex items-center justify-center md:justify-start" }, React.createElement('i', { className: "fa-solid fa-phone text-lg mr-2 text-amber-500" }), React.createElement('a', { href: "tel:+917864843669", className: "text-stone-400 hover:text-white transition-colors" }, "+91 7864843669")),
+                                React.createElement('p', { className: "flex items-center justify-center md:justify-start" }, React.createElement('i', { className: "fa-solid fa-envelope text-lg mr-2 text-amber-500" }), React.createElement('a', { href: "mailto:sodaighar2025@gmail.com", className: "text-stone-400 hover:text-white transition-colors" }, "sodaighar2025@gmail.com"))
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "container mx-auto px-6 border-t border-stone-700 mt-8 pt-6 text-center" },
+                        React.createElement('p', { className: "text-sm text-stone-400" }, `© ${new Date().getFullYear()} Bengali Bites. All Rights Reserved.`)
+                    )
+                )
+            );
+        };
+        
+        // From components/ProductDetailPage.tsx
+        const ImageZoom = ({ src, alt }) => {
+            const [isZoomReady, setIsZoomReady] = useState(false);
+            const imgRef = useRef(null);
+            const resultRef = useRef(null);
+            const lensRef = useRef(null);
+
+            useEffect(() => {
+                setIsZoomReady(false);
+                if (resultRef.current) {
+                    resultRef.current.style.backgroundImage = `url('${src}')`;
+                }
+            }, [src]);
+
+            const handleImageLoad = () => setIsZoomReady(true);
+
+            const moveLens = (e) => {
+                if (!isZoomReady) return;
+                const img = imgRef.current, result = resultRef.current, lens = lensRef.current;
+                if (!img || !result || !lens) return;
+                e.preventDefault();
+                const { left, top, width, height } = img.getBoundingClientRect();
+                const x = e.clientX - left, y = e.clientY - top;
+                const lensW = lens.offsetWidth, lensH = lens.offsetHeight;
+                let lensX = x - lensW / 2, lensY = y - lensH / 2;
+                if (lensX < 0) lensX = 0;
+                if (lensY < 0) lensY = 0;
+                if (lensX > width - lensW) lensX = width - lensW;
+                if (lensY > height - lensH) lensY = height - lensH;
+                lens.style.left = `${lensX}px`;
+                lens.style.top = `${lensY}px`;
+                const cx = result.offsetWidth / lensW, cy = result.offsetHeight / lensH;
+                result.style.backgroundSize = `${width * cx}px ${height * cy}px`;
+                result.style.backgroundPosition = `-${lensX * cx}px -${lensY * cy}px`;
+            };
+
+            const handleMouseEnter = () => {
+                if (isZoomReady && resultRef.current && lensRef.current) {
+                    resultRef.current.style.display = 'block';
+                    lensRef.current.style.display = 'block';
+                }
+            };
+            const handleMouseLeave = () => {
+                if (resultRef.current && lensRef.current) {
+                    resultRef.current.style.display = 'none';
+                    lensRef.current.style.display = 'none';
+                }
+            };
+
+            return (
+                React.createElement('div', { className: "img-zoom-container w-full h-full", onMouseEnter: handleMouseEnter, onMouseLeave: handleMouseLeave, onMouseMove: moveLens },
+                    React.createElement('img', { ref: imgRef, src: src, alt: alt, className: "w-full h-full object-contain", onLoad: handleImageLoad }),
+                    React.createElement('div', { ref: resultRef, className: "img-zoom-result right-[-410px] top-0" }),
+                    React.createElement('div', { ref: lensRef, className: "img-zoom-lens" })
+                )
+            );
+        };
+
+        const ProductDetailPage = ({ product, onBack, onAddToCart }) => {
+            const [selectedPackSize, setSelectedPackSize] = useState(product.packSizes[0]);
+            const [quantity, setQuantity] = useState(1);
+            const [currentImage, setCurrentImage] = useState(product.images[0]);
+            const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+
+            useEffect(() => {
+                setSelectedPackSize(product.packSizes[0]);
+                setQuantity(1);
+                setCurrentImage(product.images[0]);
+            }, [product]);
+
+            const handleQuantityChange = (amount) => {
+                setQuantity(prev => {
+                    const newQuantity = prev + amount;
+                    if (newQuantity < 1) return 1;
+                    if (newQuantity > 20) return 20;
+                    return newQuantity;
+                });
+            };
+
+            const handleAddToCartClick = () => {
+                onAddToCart({
+                    id: product.id,
+                    name: product.name,
+                    packSize: selectedPackSize.weight,
+                    price: selectedPackSize.price,
+                    quantity: quantity,
+                });
+                onBack();
+            };
+            
+            const handleBuyNow = () => {
+                const item = { name: product.name, packSize: selectedPackSize.weight, quantity: quantity, price: selectedPackSize.price };
+                const itemTotal = item.price * item.quantity;
+                let message = `Hello, I would like to buy the following item from Bengali Bites:\n\n* ${item.name} (${item.packSize}) - Qty: ${item.quantity} - Price: ₹${itemTotal.toFixed(2)}\n\n*Total: ₹${itemTotal.toFixed(2)}*\n\nPlease provide payment and shipping details.`;
+                const whatsappUrl = `https://wa.me/+917864843669?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            };
+
+            return (
+                React.createElement(React.Fragment, null,
+                    React.createElement('main', { className: "container mx-auto px-6 py-8 md:py-12 animate-slide-up" },
+                        React.createElement('button', { onClick: onBack, className: "mb-6 text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-2" },
+                            React.createElement('i', { className: "fas fa-arrow-left" }), " Back to Products"
+                        ),
+                        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12" },
+                            React.createElement('div', { className: "flex flex-col gap-4" },
+                                React.createElement('div', { className: "bg-[#F8F5EE] rounded-lg shadow-inner aspect-square flex items-center justify-center p-4" },
+                                   React.createElement(ImageZoom, { src: currentImage, alt: product.name })
+                                ),
+                                React.createElement('div', { className: "grid grid-cols-4 gap-4" },
+                                    product.images.map((img, index) => (
+                                        React.createElement('div', { key: index, className: `aspect-square bg-stone-100 rounded-md cursor-pointer border-2 transition ${currentImage === img ? 'border-amber-500' : 'border-transparent hover:border-amber-300'}`, onClick: () => setCurrentImage(img) },
+                                            React.createElement('img', { src: img, alt: `${product.name} thumbnail ${index + 1}`, className: "w-full h-full object-cover rounded-sm" })
+                                        )
+                                    ))
+                                )
+                            ),
+                            React.createElement('div', { className: "flex flex-col" },
+                                React.createElement('h1', { className: "text-4xl font-bold text-amber-900 mb-2" }, product.name),
+                                React.createElement('div', { className: "mb-4" },
+                                    React.createElement('span', { className: "text-4xl font-extrabold text-[#4B3A2C] mr-3" }, `₹${selectedPackSize.price.toFixed(2)}`),
+                                    selectedPackSize.oldPrice && React.createElement('span', { className: "text-xl text-gray-500 line-through" }, `₹${selectedPackSize.oldPrice.toFixed(2)}`)
+                                ),
+                                React.createElement('div', { className: "mb-6" },
+                                    React.createElement('h3', { className: "text-lg font-semibold text-gray-800 mb-2" }, "Select Pack Size:"),
+                                    React.createElement('div', { className: "flex flex-wrap gap-3" },
+                                        product.packSizes.map(size => (
+                                            React.createElement('button', { key: size.weight, onClick: () => setSelectedPackSize(size), className: `pack-size-card p-3 text-center border-2 rounded-lg cursor-pointer transition-all duration-200 min-w-[100px] ${selectedPackSize.weight === size.weight ? 'bg-amber-50 shadow-md border-amber-500' : 'bg-[#F2EFE8] border-transparent hover:border-amber-400'}` },
+                                                React.createElement('h4', { className: "text-md font-bold text-gray-800" }, size.weight),
+                                                React.createElement('p', { className: "text-sm text-gray-600" }, `₹${size.price.toFixed(2)}`)
+                                            )
+                                        ))
+                                    )
+                                ),
+                                React.createElement('div', { className: "flex flex-col gap-4" },
+                                    React.createElement('div', { className: "flex items-center gap-4" },
+                                        React.createElement('div', { className: "flex items-center space-x-2 border rounded-lg bg-white p-1" },
+                                            React.createElement('button', { onClick: () => handleQuantityChange(-1), className: "quantity-btn w-12 h-12 flex items-center justify-center text-2xl bg-[#F2EFE8] rounded-md hover:bg-stone-200 transition" }, "-"),
+                                            React.createElement('span', { className: "w-16 text-center text-2xl font-semibold bg-transparent" }, quantity),
+                                            React.createElement('button', { onClick: () => handleQuantityChange(1), className: "quantity-btn w-12 h-12 flex items-center justify-center text-2xl bg-[#F2EFE8] rounded-md hover:bg-stone-200 transition" }, "+")
+                                        ),
+                                        React.createElement('button', { onClick: handleAddToCartClick, className: "w-full sm:w-auto flex-1 bg-amber-500 hover:bg-amber-600 text-white py-3 px-6 rounded-lg font-bold text-lg transition-all transform hover:scale-105 shadow-lg h-full" }, "Add to Cart")
+                                    ),
+                                    React.createElement('button', { onClick: handleBuyNow, className: "w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-md text-lg font-bold shadow-lg transition-colors duration-200 flex items-center justify-center gap-2" },
+                                         React.createElement('i', { className: "fab fa-whatsapp text-xl" }), " Buy Now"
+                                    )
+                                ),
+                                React.createElement('div', { className: "mt-8 text-stone-700 space-y-2", dangerouslySetInnerHTML: { __html: product.description } })
+                            )
+                        )
+                    ),
+                    React.createElement('button', {
+                        onClick: () => setIsChatModalOpen(true),
+                        className: "fixed bottom-6 right-6 bg-amber-500 hover:bg-amber-600 text-white font-bold p-4 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 flex items-center gap-3 z-30",
+                        'aria-label': "Ask our Chatbot about this product"
+                    },
+                        React.createElement('i', { className: "fa-solid fa-wand-magic-sparkles text-2xl" }),
+                        React.createElement('span', { className: "hidden sm:inline" }, "Ask Chatbot")
+                    ),
+                    React.createElement(GeminiChatModal, { isOpen: isChatModalOpen, onClose: () => setIsChatModalOpen(false), product: product })
+                )
+            );
+        };
+
+        // --- MAIN APP COMPONENT (from App.tsx) ---
+        const App = () => {
+            const [cart, setCart] = useState([]);
+            const [viewingProductId, setViewingProductId] = useState(null);
+            const [isCartModalOpen, setCartModalOpen] = useState(false);
+            const [message, setMessage] = useState(null);
+
+            useEffect(() => {
+                try {
+                    const storedCart = localStorage.getItem('bengalibites_cart');
+                    if (storedCart) setCart(JSON.parse(storedCart));
+                } catch (error) {
+                    console.error("Failed to parse cart from localStorage", error);
+                    localStorage.removeItem('bengalibites_cart');
+                }
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('bengalibites_cart', JSON.stringify(cart));
+            }, [cart]);
+
+            const showMessage = (msg) => {
+                setMessage(msg);
+                setTimeout(() => setMessage(null), 3000);
+            };
+
+            const handleProductClick = useCallback((productId) => {
+                setViewingProductId(productId);
+                window.scrollTo(0, 0);
+            }, []);
+
+            const handleBackToProducts = useCallback(() => setViewingProductId(null), []);
+
+            const addToCart = useCallback((item) => {
+                setCart(prevCart => {
+                    const existingItemIndex = prevCart.findIndex(
+                        cartItem => cartItem.id === item.id && cartItem.packSize === item.packSize
+                    );
+                    const totalItemsInCart = prevCart.reduce((sum, i) => sum + i.quantity, 0);
+                    const MAX_CART_ITEMS = 20;
+
+                    if (totalItemsInCart + item.quantity > MAX_CART_ITEMS) {
+                        showMessage(`You can only have a total of ${MAX_CART_ITEMS} items in your cart.`);
+                        return prevCart;
+                    }
+
+                    let newCart;
+                    if (existingItemIndex > -1) {
+                        newCart = [...prevCart];
+                        newCart[existingItemIndex].quantity += item.quantity;
+                    } else {
+                        newCart = [...prevCart, { ...item, cartId: `${item.id}-${item.packSize}-${Date.now()}` }];
+                    }
+                    showMessage(`${item.name} (${item.packSize}) added to cart.`);
+                    return newCart;
+                });
+            }, []);
+
+            const removeFromCart = useCallback((cartId) => {
+                setCart(prevCart => prevCart.filter(item => item.cartId !== cartId));
+            }, []);
+            
+            useEffect(() => {
+                const elementsToAnimate = document.querySelectorAll('.animate-on-scroll');
+                const handleScrollAnimation = () => {
+                    const triggerBottom = window.innerHeight * 0.9;
+                    elementsToAnimate.forEach(element => {
+                        if (element.getBoundingClientRect().top < triggerBottom) {
+                            element.classList.add('animate-slide-up');
+                        }
+                    });
+                };
+                window.addEventListener('scroll', handleScrollAnimation);
+                handleScrollAnimation();
+                return () => window.removeEventListener('scroll', handleScrollAnimation);
+            }, [viewingProductId]);
+
+            const viewingProduct = useMemo(() => (
+                viewingProductId ? PRODUCTS.find(p => p.id === viewingProductId) : null
+            ), [viewingProductId]);
+
+            return (
+                React.createElement(React.Fragment, null,
+                    React.createElement(Header, { cartItemCount: cart.reduce((acc, item) => acc + item.quantity, 0), onCartClick: () => setCartModalOpen(true) }),
+                    viewingProduct ? (
+                        React.createElement(ProductDetailPage, { product: viewingProduct, onBack: handleBackToProducts, onAddToCart: addToCart })
+                    ) : (
+                        React.createElement(React.Fragment, null,
+                            React.createElement(PhotoGallery, null),
+                            React.createElement('main', { className: "py-8 md:py-12" },
+                                React.createElement(ProductShowcase, { products: PRODUCTS, onProductClick: handleProductClick }),
+                                React.createElement(VideoReviews, null),
+                                React.createElement(SocialMedia, null)
+                            )
+                        )
+                    ),
+                    React.createElement(Footer, null),
+                    React.createElement(CartModal, { isOpen: isCartModalOpen, onClose: () => setCartModalOpen(false), cartItems: cart, onRemoveItem: removeFromCart, showMessage: showMessage }),
+                    React.createElement(MessageBox, { message: message })
+                )
+            );
+        };
+
+        // --- RENDER LOGIC (from index.tsx) ---
+        const rootElement = document.getElementById('root');
+        if (!rootElement) {
+            throw new Error("Could not find root element to mount to");
+        }
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(React.createElement(React.StrictMode, null, React.createElement(App, null)));
+    </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
