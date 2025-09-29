@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://souvikm1109.github.io/khatinaru.github.io/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -22,6 +23,6 @@
     "gh-pages": "^6.1.1",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.3",
-    "vite": "^5.3.1"
+    "vite": "^7.1.7"
   }
 }
